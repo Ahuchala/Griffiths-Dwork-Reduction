@@ -25,7 +25,6 @@ ls2 = [0, -12, 6, -2, -3, 6, 0, 8, -2, -2, 8, 10, -8, -15, 2, 0, 0, -1, -2, 10, 
 
 f = sum(for i from 0 to 119 list ls1_i * (gens R)_i)
 
-
 gensR = gens R;
 numGens = #gensR;
 
@@ -177,49 +176,5 @@ I = ideal flatten (flatten for i from 0 to n-1 list differentiatePolynomial(i,i,
 ));
 
 
-gensI = gens I;
-
-if (# (entries gens I)#0 != n^2) then error (
-    print "Warning: Jacobian ideal does not have expected number of generators";
-    exit 1;
-) ;
-
-
-
-J = R /  (I + pluckerIdeal);
-
-
--- Hodge numbers of primitive cohomology
--- (R_f)_{(p+1)d-n} = H^{N-1-p,p}
-for i from 0 to n+1 list hilbertFunction((i+1)*d - n,J)
-
-
-for i from 1 to n-1 do if i == k*(n-k)/2 then print concatenate("Warning: nontrivial cokernel contribution for i =",toString i) else continue
-
-
--- e.g. 3/3 == 1
-for i from 1 to n-1 do if (i==((2*n-1-d)/3) or i==((4*n-9-d)/3)) then print concatenate("Potential error with i =",toString i) else continue
-
-
-print "Expected Hodge numbers:"
-
-
-
-G = flagBundle {k,n-k}; -- secretly Gr(k,n)
-X = sectionZeroLocus(OO_G(d)); 
-
-OmG = cotangentBundle G;
-OmX = cotangentBundle X;
-
-ls = for i from 0 to floor(dim X / 2) list
-    abs(chi exteriorPower(i, OmX) - chi exteriorPower(i, OmG));
-
-if (k*(n-k) % 2 ==0) then (
-    print join(ls,reverse ls);
-) else (
--- include the second half, but don't repeat middle element
-print (join(ls, for i from 1 to #ls-1  list ls#(#ls-i-1)));
-);
-
--- print basis with
-for p from 10 to 12 list basis(p*d -n,J)
+singLocus = I + pluckerIdeal + ideal f;
+dim singLocus == 0  
