@@ -173,4 +173,4 @@ I = ideal flatten (flatten for i from 0 to n-1 list differentiatePolynomial(i,i,
 
 
 singLocus = I + pluckerIdeal + ideal f;
-assert (dim singLocus ==0)  -- -1 iff smooth
+dim singLocus == 0  
