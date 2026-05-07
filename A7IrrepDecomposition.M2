@@ -1,256 +1,197 @@
-needsPackage "Resultants";
-needsPackage "TensorComplexes"; -- for multiSubsets function
-needsPackage "Divisor";
-needsPackage "Schubert2"; -- for Hodge number verification
-needsPackage "Cyclotomic"
+needsPackage "TensorComplexes";
+needsPackage "Cyclotomic";
+
 allowableThreads = 8;
 n = 10;
 k = 3;
--- K = cyclotomicField(7);
--- v = K_0;
--- z = v + v^2 + v^4;
--- K = QQ;
-K = QQ[z]/(z^2+z+2);
 
-d = 1;
+K = toField(QQ[t]/(t^2 + t + 2))
+vv = K_0        -- satisfies vv^2 + vv + 2 = 0
+ww = -1 - vv
+-- no z, zeta3, zeta7 needed anymore since ls1, ls2 are integer lists
 
-
-
-SYMMETRIZE = true;
-ANTISYMMETRIZE = false;
--- access generators like p_(0,2)
-
--- R = K[p_(0,0) .. p_(n-1,n-1)]
-
-pluckerIdeal = Grassmannian(k-1,n-1,CoefficientRing=>K);
+pluckerIdeal = Grassmannian(k-1, n-1, CoefficientRing => K);
 R = ring pluckerIdeal;
-
-
-
-
-gensR = gens R;
+gensR   = gens R;
 numGens = #gensR;
-
-
-countInversions = (perm) -> (
-    lenPerm = #perm;
-    ans = 0;
-    for i from 0 to lenPerm-1 do (
-  for j from i+1 to lenPerm-1 do (
-if perm#j < perm#i then (
-    ans += 1;
-);
-  );
-    );
-    return ans;
-);
-
--- (1,2,3) -> false, (2,2,3) -> true
-hasDuplicates = (ls) -> (
-    return unique ls != ls;
-);
-
--- define all p_I, not just for I increasing (i.e. the k wedges of x_i)
-for inds in multiSubsets(n,k) do (
-	-- set all p_ii to zero
-	if (hasDuplicates(inds)) then (
-  for perm in permutations(inds) do (
-p_(toSequence perm) = 0;
-  );
-    ) else for perm in permutations(inds) do (
-		-- e.g. set p_(i,j,k) = -p_(j,i,k)
-  p_(toSequence perm) = (-1)^(countInversions(perm)) * p_(toSequence inds);
-    );
-);
-
-
--- f = sum(apply(gens R, i->random(0,100)*(i)^d));
-
-randomIntPoly = (d, R) -> 
-(
-	g := random(d, R);
-	monoms := flatten entries monomials g;
-	sum apply(monoms, m -> random(100) * m)
-);
-
--- Usage:
--- f = randomIntPoly(d, R);
-
-inversePerm = (perm) -> (
-	n := #perm;
-	inv := new MutableList from toList(0..n-1);
-	for i from 0 to n-1 do (
-		inv#(perm#i) = i;
-	);
-	toList inv
-);
 
 countInversions = (perm) -> (
     ans := 0;
-    for i from 0 to #perm-2 do (
-        for j from i+1 to #perm-1 do (
+    for i from 0 to #perm-2 do
+        for j from i+1 to #perm-1 do
             if perm#j < perm#i then ans = ans + 1;
+    ans
+);
+
+hasDuplicates = (myls) -> unique myls != myls;
+
+for inds in multiSubsets(n, k) do (
+    if hasDuplicates inds then (
+        for perm in permutations inds do p_(toSequence perm) = 0;
+    ) else (
+        for perm in permutations inds do
+            p_(toSequence perm) = (-1)^(countInversions perm) * p_(toSequence inds);
+    );
+);
+
+getIndex = (mon) -> (baseName mon)#1;
+
+exponentToMonomial = (expList) ->
+    product(for i from 0 to numGens-1 list gensR#i ^ (expList#i));
+
+differentiateMonomial = (i, j, mon) -> (
+    monomialIndex := (exponents mon)#0;
+    exponent      := sum monomialIndex;
+    ind           := position(monomialIndex, e -> e == exponent);
+    monomial      := gensR#ind;
+    idx           := getIndex monomial;
+    if not member(j, idx) then return 0;
+    if i != j and member(i, idx) then return 0;
+    exponent * p_(replace(position(idx, e -> e == j), i, idx)) * p_idx^(exponent-1)
+);
+
+differentiatePolynomial = (i, j, polynomial) -> (
+    ans := 0;
+    for monomial in terms polynomial do (
+        exponentList := ((listForm monomial)#0)#0;
+        coeff        := ((listForm monomial)#0)#1;
+        for lsIndex from 0 to numGens-1 do (
+            if exponentList#lsIndex > 0 then (
+                mon             := gensR#lsIndex ^ (exponentList#lsIndex);
+                monomialOverMon := new MutableList from exponentList;
+                monomialOverMon#lsIndex = 0;
+                monomialOverMon = exponentToMonomial toList monomialOverMon;
+                ans = ans + coeff * differentiateMonomial(i, j, mon) * monomialOverMon;
+            );
         );
     );
     ans
 );
 
--- Build lookup table once
-varLookup := hashTable apply(gens R, v -> (
-    toList (baseName v)#1 => v
-));
+ls = [-22*t-11, 24*t-30, 4*t-5, 22*t+11, -12*t+15, 4*t-5, -4*t+5, -22*t-11,-24*t-47, 6*t+31, 4*t-5, 6*t+31, -12*t+15, 22*t+11, -22*t-11, -30*t-1,-22*t-11, 24*t+47, 9*t+8, -17*t+79, 17*t-2, -20*t+25, -3*t-54, -9*t-8,17*t-2, -22*t-11, 12*t-15, 37*t+50, -22*t-11, -4*t+5, -28*t+35, -21*t-70,-77, 56*t+7, 42*t+63, -12*t+15, -6*t-31, 12*t-15, 4*t-5, -4*t+5, -12*t+15,6*t+31, -4*t+5, 24*t-30, 32*t+37, -17*t+2, -3*t-54, 17*t-2, 37*t+50,-17*t+2, -5*t-13, 17*t-2, 4*t-5, -4*t+5, 22*t+11, -35*t-14, 22*t+11,-3*t-54, 17*t-2, 24*t+47, -12*t+15, -t-18, 12*t-15, -4*t+5, 17*t-2,-22*t-11, -6*t-31, 4*t-5, 17*t-2, -4*t+5, 9*t+8, 77, -35*t-14, -21*t-70,21*t-7, 56*t+7, 14*t+21, 4*t-5, -5*t-13, -17*t+2, 12*t-15, 9*t+8, -17*t+2,28*t-35, 6*t+31, -4*t+5, 5*t+13, -4*t+5, 6*t+31, 4*t-5, 12*t-15, -12*t+15,-12*t+15, -32*t-37, 12*t-15, 32*t+37, -4*t+5, 11*t+44, 12*t-15, -22*t-11,17*t-2, 4*t-5, 6*t+31, -4*t+5, -21*t+7, 30*t+1, -4*t+5, -22*t-11,-11*t-44, -24*t-47, -37*t-50, 6*t+31, 42*t+63, -28*t+35, -35*t-14,-14*t-21, 21*t-7, 14*t+21, 14*t+21, 77];
+f = sum(for i from 0 to 119 list ls_i * (gens R)_i);
 
-applyPermutationToPoly = (f, perm) -> (
-    subList := apply(gens R, v -> (
-        indices := toList (baseName v)#1;
-        newIndices := apply(indices, i -> perm#i);
-        sortedIndices := sort newIndices;
-        sign := (-1)^(countInversions(newIndices));
-        v => sign * varLookup#sortedIndices
+
+-- Build list of Lie derivative generators using append (no nested for..list)
+gensIlist = {};
+for i from 0 to n-1 do
+    gensIlist = append(gensIlist, differentiatePolynomial(i, i, f));
+for i from 0 to n-1 do
+    for j from i+1 to n-1 do (
+        gensIlist = append(gensIlist, differentiatePolynomial(i, j, f));
+        gensIlist = append(gensIlist, differentiatePolynomial(j, i, f));
+    );
+print("Number of Lie derivative generators: " | toString(#gensIlist));  -- should be 100
+
+-- Hardcoded basis of J_1 (verified over finite field)
+basisJ1R = {
+    p_(1,6,9), p_(2,6,9), p_(3,6,9), p_(4,6,9), p_(5,6,9),
+    p_(0,7,9), p_(1,7,9), p_(2,7,9), p_(3,7,9), p_(4,7,9),
+    p_(5,7,9), p_(6,7,9), p_(0,8,9), p_(1,8,9), p_(2,8,9),
+    p_(3,8,9), p_(4,8,9), p_(5,8,9), p_(6,8,9), p_(7,8,9)
+};
+
+-- All 120 monomials in fixed order
+allMons = flatten entries matrix {gens R};
+
+-- Projection matrix: [I_1 cols | basis indicators]^{-1}, take last 20 rows
+Irows    = apply(gensIlist, g -> apply(allMons, m -> coefficient(m, g)));
+Imat     = matrix(K, Irows);                                       -- 100x120
+basisRows = apply(basisJ1R, b -> apply(allMons, m -> if m == b then 1_K else 0_K));
+basisMat = transpose matrix(K, basisRows);                         -- 120x20
+fullMat  = (transpose Imat) | basisMat;                           -- 120x120
+projMat  = (inverse fullMat)^{100..119};                          -- 20x120
+
+-- A_7 generator matrices for V_10 (Atlas X3: vv=b, ww=B)
+GENa = matrix(K, {
+    {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 1, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 1, 0, 0, 0, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
+    {1, -ww/2, -vv-ww/2, ww/2, 0, vv/2-ww/4, -ww/2, -vv/2-ww/4, -ww/2, -vv-ww/2},
+    {1, -ww/2, -ww/2, -vv-ww/2, 1, 3*vv/2+3*ww/4, -ww/2, vv/2+3*ww/4, -ww/2, -vv-ww/2},
+    {0, ww, 0, vv, -1, 1, -1, -ww, -vv, vv},
+    {-2*vv-ww, vv+3*ww/2, vv+3*ww/2, vv-ww/2, -ww, -vv/2-3*ww/4, -vv-ww/2, -vv/2+ww/4, -vv-ww/2, ww/2},
+    {-vv+ww/2, vv/2-ww/4, -vv/2-3*ww/4, -3*vv/2-ww/4, -2*vv-3*ww/2, 3*vv/4-3*ww/8, -3*vv/2-5*ww/4, 3*vv/4+13*ww/8, -vv/2-3*ww/4, -vv/2+5*ww/4}
+});
+
+GENb = matrix(K, {
+    {0, 0, 1, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+    {-vv-ww/2, vv/2+ww/4, vv/2+ww/4, -vv/2-3*ww/4, -ww/2, vv/4-ww/8, -vv/2-3*ww/4, -3*vv/4-ww/8, vv/2+ww/4, -vv/2-ww/4},
+    {1, -ww/2, -vv-ww/2, ww/2, 0, vv/2-ww/4, -ww/2, -vv/2-ww/4, -ww/2, -vv-ww/2},
+    {vv+ww/2, vv/2+3*ww/4, vv/2+3*ww/4, vv/2-ww/4, vv+ww/2, -vv/4+5*ww/8, vv/2-ww/4, -5*vv/4-11*ww/8, vv/2+3*ww/4, -vv/2-3*ww/4},
+    {-2, -ww, 0, -vv, 0, 0, 0, 0, 0, 0},
+    {ww, 2, ww, vv+2*ww, -vv, -vv-2*ww, -vv, -2, 1, vv+2*ww}
+});
+
+print("GENa^3 == id: " | toString (GENa^3 == id_(K^10)));
+print("GENb^5 == id: " | toString (GENb^5 == id_(K^10)));
+
+kSubsets = subsets(toList(0..n-1), k);
+
+actWedge = (M, ijk) -> (
+    sum apply(kSubsets, lmp -> (
+        d := det(M^lmp_ijk);
+        if d == 0_K then 0_R else sub(d, R) * p_(toSequence lmp)
+    ))
+);
+
+repMatrix = (M) -> (
+    cols := apply(basisJ1R, bR -> (
+        ijk    := toList (baseName bR)#1;
+        img    := actWedge(M, ijk);
+        coeffs := apply(allMons, m -> coefficient(m, img));
+        v      := transpose matrix {coeffs};
+        flatten entries (projMat * v)
     ));
-    sub(f, subList)
+    transpose matrix cols
 );
 
-sumOverPermutations = (f, permList) -> (
-  if ANTISYMMETRIZE then (
-    return sum apply(permList, perm -> (-1)^(countInversions(perm)) * applyPermutationToPoly(f, perm))
-  );
-  if not ANTISYMMETRIZE then (
-    return sum apply(permList, perm -> applyPermutationToPoly(f, perm))
-  );
-);
+Ainv = inverse GENa;
+Binv = inverse GENb;
+classReps = {
+    id_(K^10),
+    GENa * Binv * GENa * GENb,                       -- 2A size 105
+    GENa,                                             -- 3A size 70
+    Ainv * GENb * GENa * GENb,                       -- 3B size 280
+    Ainv * GENb * GENa * GENb^2,                     -- 4A size 630
+    GENb,                                             -- 5A size 504
+    GENa * GENb * GENa * GENb * GENa * GENb^2,       -- 6A size 210
+    GENa * GENb,                                      -- 7A size 360
+    Ainv * GENb                                       -- 7B size 360
+};
+classSizes = {1, 105, 70, 280, 630, 504, 210, 360, 360};
 
+chiRep := apply(classReps, g -> trace repMatrix g);
+print("Character of 20-dim rep:");
+print chiRep;
+print("Trace at identity (should be 20): " | toString chiRep#0);
 
--- f = sum(for i from 0 to 119 list ls1_i * (gens R)_i)
--- f += z * sum(for i from 0 to 119 list ls2_i * (gens R)_i)
-ls = {4*z+9, -12*z-6, -2*z-1, -4*z-9, 6*z+3, -2*z-1, 2*z+1, 4*z+9, -2*z+13, 4*z-5, -2*z-1, 4*z-5, 6*z+3, -4*z-9, 4*z+9, 8*z+11, 4*z+9, 2*z-13, -z-4, 19*z-1, -5*z-6, 10*z+5, -9*z+6, z+4, -5*z-6, 4*z+9, -6*z-3, -z-18, 4*z+9, 2*z+1, 14*z+7, -7*z+14, -14*z+7, -14*z-21, -21, 6*z+3, -4*z+5, -6*z-3, -2*z-1, 2*z+1, 6*z+3, 4*z-5, 2*z+1, -12*z-6, -2*z-15, 5*z+6, -9*z+6, -5*z-6, -z-18, 5*z+6, -z+3, -5*z-6, -2*z-1, 2*z+1, -4*z-9, 7*z+14, -4*z-9, -9*z+6, -5*z-6, 2*z-13, 6*z+3, -3*z+2, -6*z-3, 2*z+1, -5*z-6, 4*z+9, -4*z+5, -2*z-1, -5*z-6, 2*z+1, -z-4, 14*z-7, 7*z+14, -7*z+14, -7*z-7, -14*z-21, -7, -2*z-1, -z+3, 5*z+6, -6*z-3, -z-4, 5*z+6, -14*z-7, 4*z-5, 2*z+1, z-3, 2*z+1, 4*z-5, -2*z-1, -6*z-3, 6*z+3, 6*z+3, 2*z+15, -6*z-3, -2*z-15, 2*z+1, 5*z-8, -6*z-3, 4*z+9, -5*z-6, -2*z-1, 4*z-5, 2*z+1, 7*z+7, -8*z-11, 2*z+1, 4*z+9, -5*z+8, -2*z+13, z+18, 4*z-5, -21, 14*z+7, 7*z+14, 7, -7*z-7, -7, -7, 14*z-7}
-f = sum(for i from 0 to 119 list ls_i * (gens R)_i)
+conjMap = map(K, K, {-1 - K_0});
+conj    = (x) -> conjMap x;
+ip      = (chi) -> (1/2520) * sum apply(9, i -> classSizes#i * conj(chi#i) * chiRep#i);
 
+chi1    = {1_K,  1,  1,  1,  1,  1,  1,  1,  1};
+chiV6   = {6_K,  2,  3,  0,  0,  1, -1, -1, -1};  
+chiV10  = {10_K,-2,  1,  1,  0,  0,  1, vv, ww};
+chiV10p = {10_K,-2,  1,  1,  0,  0,  1, ww, vv};
+chiV14  = {14_K, 2,  2, -1,  0, -1,  2,  0,  0}; 
+chiV14p = {14_K, 2, -1,  2,  0, -1, -1,  0,  0};  
+chiV15  = {15_K,-1,  3,  0, -1,  0, -1,  1,  1};
+chiV21  = {21_K, 1, -3,  0, -1,  1,  1,  0,  0}; 
+chiV35  = {35_K,-1, -1, -1,  1,  0, -1,  0,  0};
 
-
-symF = f
-
-
-print "Divisibility check"
-
--- check Fern and my vanishings
-for t from 1 to min(n-1,n //d) do (
-    print(t);
-    assert not (n % (t*d)==0 and k*d*t % n == 0)
-);
-
-
-assert (gcd(k,n//d) == 1);
-assert (gcd(n-k,n//d) == 1); -- probably redundant?
-assert (n<5 or n % 2 == 0 or (k!=2 and k!= n-2) or (n+1)//2 % d != 0);
-
-
-
-
--- e.g. p_(0,1) -> (0,1)
-getIndex = (mon) -> (
-    return (baseName mon)#1;
-);
-
--- e.g. 5*p_(0,1)*p_(1,2)^2 -> ({1,0,2,0,0,...,0})
-getMonomials = (polynomial) -> (
-    return exponents (polynomial);
-);
-
--- e.g. 5* p_(0,1)*p_(1,2)^2 -> (| p_(0,1)p_(1,2)^2 |, {3} | 5 |)
-getCoefficients = (polynomial) -> (
-    return coefficients(polynomial);
-);
-
-exponentToMonomial = (ls) -> (
-    return product (for i from 0 to (numGens-1) list (gensR#i) ^ (ls#i));
-);
-
--- this only works for p_I^j, not products
-differentiateMonomial = (i,j,mon) -> (
-    monomialIndex = (exponents (mon))#0;
-    -- silly way to find the single exponent that shows up
-    exponent = sum(monomialIndex);
-    -- select the entry 
-    ind = position((exponents mon)#0,lambda->lambda==exponent);
-    monomial = gensR#ind;
-    ls = getIndex(monomial);
-    if (not member(j,ls)) then (
-  return 0;
-    );
-    if (i!=j) and( member(i,ls)) then (
-  return 0;
-    );
-
-    -- set j to i (replace copies then edits a list)
-    return exponent * p_(replace(position(ls, lambda->lambda==j),i,ls)) * p_ls^(exponent-1);
-);
-
-
-differentiatePolynomial = (i,j,polynomial) -> (
-    ans = 0;
-    mons = terms(polynomial);
-    for monomial in mons do (
-  exponentList = ((listForm monomial)#0)#0;
-  coeff = ((listForm monomial)#0)#1;
-  
-  for lsIndex from 0 to (numGens -1) do (
-if ((exponentList#lsIndex)>0) then (
-    mon = (gensR#lsIndex) ^(exponentList#lsIndex);
-    -- this is an annoying way to implement the product rule
-    monomialOverMon = new MutableList from exponentList;
-    monomialOverMon#lsIndex = 0;
-    monomialOverMon = exponentToMonomial(toList monomialOverMon);
-    ans +=  coeff * differentiateMonomial(i,j,mon) * monomialOverMon;
-);
-  );
-    );
-    return ans;
-
-);
-
-
-
-
--- Jacobian ideal I
-I = ideal flatten (flatten for i from 0 to n-1 list differentiatePolynomial(i,i,f), 
-    flatten flatten for i from 0 to n-1 list (
-	for j from i+1 to n-1 list (
-		{differentiatePolynomial(i,j,f),
-		differentiatePolynomial(j,i,f)}
-		-- differentiatePolynomial(i,i,f)-differentiatePolynomial(j,j,f)}
-	)
-));
-
-u = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1}};
-u = transpose matrix(K, u);
-
-
-b = z
-B = -1-b
-r = matrix(K,{{0,1,0,0,0,0,0,0,0,0},{0,0,0,1,0,0,0,0,0,0},{0,0,0,0,0,1,0,0,0,0},{1,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,1,0},{1,-1/2*B,-b-1/2*B,1/2*B,0,1/2*b-1/4*B,-1/2*B,-1/2*b-1/4*B,-1/2*B,  -b-1/2*B},{1,-1/2*B,-1/2*B,-b-1/2*B,1,3/2*b+3/4*B,-1/2*B,1/2*b+3/4*B,-1/2*B,  -b-1/2*B},{0,B,0,b,-1,1,-1,-B,-b,b},{-2*b-B,b+3/2*B,b+3/2*B,b-1/2*B,-B,-1/2*b-3/4*B,-b-1/2*B,-1/2*b+1/4*B,  -b-1/2*B,1/2*B},{-b+1/2*B,1/2*b-1/4*B,-1/2*b-3/4*B,-3/2*b-1/4*B,-2*b-3/2*B,3/4*b-3/8*B,  -3/2*b-5/4*B,3/4*b+13/8*B,-1/2*b-3/4*B,-1/2*b+5/4*B}});
-
-s = matrix(K,{{0,0,1,0,0,0,0,0,0,0},{0,0,0,0,1,0,0,0,0,0},{0,0,0,0,0,0,1,0,0,0},{0,0,0,0,0,0,0,1,0,0},{0,0,0,0,0,0,0,0,0,1},{-b-1/2*B,1/2*b+1/4*B,1/2*b+1/4*B,-1/2*b-3/4*B,-1/2*B,1/4*b-1/8*B,  -1/2*b-3/4*B,-3/4*b-1/8*B,1/2*b+1/4*B,-1/2*b-1/4*B},{1,-1/2*B,-b-1/2*B,1/2*B,0,1/2*b-1/4*B,-1/2*B,-1/2*b-1/4*B,-1/2*B,  -b-1/2*B},{b+1/2*B,1/2*b+3/4*B,1/2*b+3/4*B,1/2*b-1/4*B,b+1/2*B,-1/4*b+5/8*B,  1/2*b-1/4*B,-5/4*b-11/8*B,1/2*b+3/4*B,-1/2*b-3/4*B},{-2,-B,0,-b,0,0,0,0,0,0},{B,2,B,b+2*B,-b,-b-2*B,-b,-2,1,b+2*B}});
-
-
-AAA = exteriorPower(3,r);
-BBB = exteriorPower(3,s);
-
-
-
-M = last coefficients generators I
-M = substitute(M,K)
-trace ((AAA*M)//M)
-
-
-
-proj = (G) -> trace((G*M)//M);
-
-20                                                        -- C1: 1
-proj(AAA * inverse(BBB) * AAA * BBB)                      -- C2: ab^{-1}ab
-proj(AAA)                                                 -- C3: a
-proj(AAA*BBB*AAA*BBB*AAA*BBB^2)                          -- C4: ababab^2
-proj(inverse(AAA)*BBB*AAA*BBB^2)                         -- C5: a^{-1}bab^2
-proj(BBB)                                                 -- C6: b
-proj(inverse(AAA)*BBB*AAA*BBB)                           -- C7: a^{-1}bab
-proj(AAA*BBB)                                             -- C8: ab
+print("n_1    = " | toString ip chi1);
+print("n_V6   = " | toString ip chiV6);
+print("n_V10  = " | toString ip chiV10);
+print("n_V10' = " | toString ip chiV10p);
+print("n_V14  = " | toString ip chiV14);
+print("n_V14' = " | toString ip chiV14p);
+print("n_V15  = " | toString ip chiV15);
+print("n_V21  = " | toString ip chiV21);
+print("n_V35  = " | toString ip chiV35);
