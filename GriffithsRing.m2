@@ -2,14 +2,16 @@ needsPackage "Resultants";
 needsPackage "TensorComplexes"; -- for multiSubsets function
 needsPackage "WeilDivisors";
 needsPackage "Schubert2"; -- for Hodge number verification
-needsPackage "Cyclotomic"
+
 allowableThreads = 8;
 n = 5;
 k = 2;
 
 K = QQ;
 
-d = 2;
+d = 3;
+
+
 
 -- access generators like p_(0,2)
 
@@ -23,6 +25,28 @@ R = ring pluckerIdeal;
 
 gensR = gens R;
 numGens = #gensR;
+
+
+
+
+
+
+-- Make sure \varphi' is surjective
+assert(2<= k and k<= n-2)
+
+
+-- Check divisibility constraints 
+
+print "Divisibility check"
+
+
+-- Check assumption 2.9
+assert ((n%d != 0) or  gcd(k,n//d) == 1);
+
+-- Check assumption 2.10
+assert ((k!=2 and k!= n-2) and (n+1)%(2 * d) != 0);
+
+
 
 
 countInversions = (perm) -> (
@@ -57,7 +81,7 @@ p_(toSequence perm) = 0;
 );
 
 
--- f = sum(apply(gens R, i->random(0,100)*(i)^d));
+f = sum(apply(gens R, i->random(0,100)*(i)^d));
 
 randomIntPoly = (d, R) -> 
 (
@@ -66,7 +90,7 @@ randomIntPoly = (d, R) ->
 	sum apply(monoms, m -> random(100) * m)
 );
 
-f = randomIntPoly(d, R);
+-- f = randomIntPoly(d, R);
 
 inversePerm = (perm) -> (
 	n := #perm;
@@ -86,46 +110,6 @@ countInversions = (perm) -> (
     );
     ans
 );
-
--- Build lookup table once
-varLookup := hashTable apply(gens R, v -> (
-    toList (baseName v)#1 => v
-));
-
-applyPermutationToPoly = (f, perm) -> (
-    subList := apply(gens R, v -> (
-        indices := toList (baseName v)#1;
-        newIndices := apply(indices, i -> perm#i);
-        sortedIndices := sort newIndices;
-        sign := (-1)^(countInversions(newIndices));
-        v => sign * varLookup#sortedIndices
-    ));
-    sub(f, subList)
-);
-
-sumOverPermutations = (f, permList) -> (
-  if ANTISYMMETRIZE then (
-    return sum apply(permList, perm -> (-1)^(countInversions(perm)) * applyPermutationToPoly(f, perm))
-  );
-  if not ANTISYMMETRIZE then (
-    return sum apply(permList, perm -> applyPermutationToPoly(f, perm))
-  );
-);
-
-
-print "Divisibility check"
-
--- check Fern and my vanishings
-for t from 1 to min(n-1,n //d) do (
-    print(t);
-    assert not (n % (t*d)==0 and k*d*t % n == 0)
-);
-
-
-assert (gcd(k,n//d) == 1);
-assert (gcd(n-k,n//d) == 1); -- probably redundant?
-assert (n<5 or n % 2 == 0 or (k!=2 and k!= n-2) or (n+1)//2 % d != 0);
-
 
 
 
@@ -218,8 +202,9 @@ if (# (entries gens I)#0 != n^2) then error (
 
 
 J = R /  (I + pluckerIdeal);
--- S = R/(pluckerIdeal + J);
--- S = R/(pluckerIdeal + J + antisymmetrize_ideal);
+
+-- only show nonzero elements of R/I
+select(for i from 0 to k*(n-k)-1 list basis(i*d-n,J), b -> b != 0)
 
 -- Hodge numbers of primitive cohomology
 -- (R_f)_{(p+1)d-n} = H^{N-1-p,p}
@@ -236,17 +221,8 @@ for i from 1 to n-1 do if (i==((2*n-1-d)/3) or i==((4*n-9-d)/3)) then print conc
 print "Expected Hodge numbers:"
 
 
--- k = 3
--- n = 7
-
--- d = toList(d)
-
-
-
 
 G = flagBundle {k,n-k}; -- secretly Gr(k,n)
--- for d from 1 to 25 list (
--- X = sectionZeroLocus(sum for i from 1 to #d list OO_G(i)); -- quadric and a cubic
 X = sectionZeroLocus(OO_G(d)); 
 
 OmG = cotangentBundle G;
@@ -265,5 +241,4 @@ print (join(ls, for i from 1 to #ls-1  list ls#(#ls-i-1)));
 -- print "Smoothness check"
 -- assert isSmooth(pluckerIdeal+ideal f,IsGraded=>true)
 
--- only show nonzero elements of R/I
-select(for i from 0 to k*(n-k)-1 list basis(i*d-n,J), b -> b != 0)
+-- TODO: calculate primitive grassmannian contribution
