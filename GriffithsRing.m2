@@ -4,12 +4,12 @@ needsPackage "WeilDivisors";
 needsPackage "Schubert2"; -- for Hodge number verification
 
 allowableThreads = 8;
-n = 8
-k = 2;
+n = 8;
+k = 3;
 
 -- K = QQ;
 K = ZZ/97; -- enable for faster computation
-d = 2;
+d = 1;
 
 
 
@@ -179,13 +179,14 @@ if ((exponentList#lsIndex)>0) then (
 
 
 -- Jacobian ideal I
-I = ideal flatten (flatten for i from 0 to n-1 list differentiatePolynomial(i,i,f), 
+I = ideal flatten (flatten for i from 0 to n-2 list differentiatePolynomial(i,i,f)-differentiatePolynomial(i+1,i+1,f), 
     flatten flatten for i from 0 to n-1 list (
 	for j from i+1 to n-1 list (
 		{differentiatePolynomial(i,j,f),
 		differentiatePolynomial(j,i,f)}
 	)
 ));
+I += (f);
 
 
 
@@ -210,11 +211,11 @@ select(for i from 0 to k*(n-k)-1 list basis(i*d-n,J), b -> b != 0)
 for i from 0 to n+1 list hilbertFunction((i+1)*d - n,J)
 
 
-for i from 1 to n-1 do if i == k*(n-k)/2 then print concatenate("Warning: nontrivial cokernel contribution for i =",toString i) else continue
+-- for i from 1 to n-1 do if i == k*(n-k)/2 then print concatenate("Warning: nontrivial cokernel contribution for i =",toString i) else continue
 
 
 -- e.g. 3/3 == 1
-for i from 1 to n-1 do if (i==((2*n-1-d)/3) or i==((4*n-9-d)/3)) then print concatenate("Potential error with i =",toString i) else continue
+-- for i from 1 to n-1 do if (i==((2*n-1-d)/3) or i==((4*n-9-d)/3)) then print concatenate("Potential error with i =",toString i) else continue
 
 
 print "Expected Hodge numbers:"
@@ -240,4 +241,31 @@ print (join(ls, for i from 1 to #ls-1  list ls#(#ls-i-1)));
 -- print "Smoothness check"
 -- assert isSmooth(pluckerIdeal+ideal f,IsGraded=>true)
 
--- TODO: calculate primitive grassmannian contribution
+
+qBinom = (k, n, q) -> (
+    -- Compute numerator and denominator products separately before dividing
+    -- [n choose k]_q = prod_{j=0}^{k-1} (1-q^{n-j}) / prod_{j=0}^{k-1} (1-q^{j+1})
+    num := product(k, j -> 1 - q^(n - j));
+    den := product(k, j -> 1 - q^(j + 1));
+    num // den
+);
+
+-- computes H^N_prim or H^{N-1}_prim, if N even or odd, respectively
+primCohomGr = (k, n) -> (
+    N    := k * (n - k);
+    halfN := N // 2;
+    R    := QQ[q];
+    f    := (1 - q) * qBinom(k, n, q);
+    coefficient(q^halfN, f)
+);
+
+
+if primCohomGr(k,n) >0 then (
+  if k*(n-k) % 2 == 0 then (
+    -- contribution from H^N_prim(Gr(k,n)), when N even
+      print("Contribution to (R/J_f)_{id-n} from H^N_van(Gr), with i = " | toString (k*(n-k)//2) | ": "| toString primCohomGr(k,n));
+  ) else (
+    -- contribution from H^(N-1)_prim(Gr(k,n)), when N odd
+      print("Contribution to H^*_prim(Z) from H^{N-1}_van(Gr): " | toString primCohomGr(k,n));
+  );
+);
