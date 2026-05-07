@@ -4,12 +4,12 @@ needsPackage "WeilDivisors";
 needsPackage "Schubert2"; -- for Hodge number verification
 
 allowableThreads = 8;
-n = 5;
+n = 8
 k = 2;
 
-K = QQ;
-
-d = 3;
+-- K = QQ;
+K = ZZ/97; -- enable for faster computation
+d = 2;
 
 
 
@@ -31,7 +31,7 @@ numGens = #gensR;
 
 
 
--- Make sure \varphi' is surjective
+-- Make sure \varphi' of (2.2.13) is surjective
 assert(2<= k and k<= n-2)
 
 
@@ -184,16 +184,15 @@ I = ideal flatten (flatten for i from 0 to n-1 list differentiatePolynomial(i,i,
 	for j from i+1 to n-1 list (
 		{differentiatePolynomial(i,j,f),
 		differentiatePolynomial(j,i,f)}
-		-- differentiatePolynomial(i,i,f)-differentiatePolynomial(j,j,f)}
 	)
 ));
 
--- I += ideal flatten for i from 0 to n-1 list differentiatePolynomial(i,i,f)
 
--- I = trim I;
 
 gensI = gens I;
 
+
+-- easy necessary condition for smoothness
 if (# (entries gens I)#0 != n^2) then error (
     print "Warning: Jacobian ideal does not have expected number of generators";
     exit 1;
