@@ -296,8 +296,8 @@ print("trace rhoA = " | toString trace rhoA);
 print("trace rhoB = " | toString trace rhoB);
 
 -- Sanity: orders of generators
-print("rhoA^5 == id: " | toString (rhoA^11 == id_(QQ^20)));
-print("rhoB^3  == id: " | toString (rhoB^2  == id_(QQ^20)));
+print("rhoA^5 == id: " | toString (rhoA^5 == id_(QQ^20)));
+print("rhoB^3  == id: " | toString (rhoB^3  == id_(QQ^20)));
 
 -- Class representatives from character table
 Ainv = inverse Amat;
