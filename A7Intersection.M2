@@ -12,17 +12,6 @@ n = 10;
 triples = flatten flatten for i from 0 to n-1 list
             for j from i+1 to n-1 list
               for l from j+1 to n-1 list {{i,j,l}};
-m = #triples;
-
-det3 = (A, R, C) -> (        -- fixed: 0-indexed
-  r1 := R#0; r2 := R#1; r3 := R#2;
-  c1 := C#0; c2 := C#1; c3 := C#2;
-  a11 := A_(r1,c1); a12 := A_(r1,c2); a13 := A_(r1,c3);
-  a21 := A_(r2,c1); a22 := A_(r2,c2); a23 := A_(r2,c3);
-  a31 := A_(r3,c1); a32 := A_(r3,c2); a33 := A_(r3,c3);
-  a11*(a22*a33-a23*a32) - a12*(a21*a33-a23*a31) + a13*(a21*a32-a22*a31)
-);
-
 
 wr = exteriorPower(3,r);
 ws = exteriorPower(3,s);
