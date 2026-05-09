@@ -5,11 +5,11 @@ needsPackage "Schubert2"; -- for Hodge number verification
 
 allowableThreads = 8;
 n = 8;
-k = 3;
+k = 2;
 
 -- K = QQ;
 K = ZZ/97; -- enable for faster computation
-d = 1;
+d = 2;
 
 
 
@@ -208,7 +208,7 @@ select(for i from 0 to k*(n-k)-1 list basis(i*d-n,J), b -> b != 0)
 
 -- Hodge numbers of primitive cohomology
 -- (R_f)_{(p+1)d-n} = H^{N-1-p,p}
-for i from 0 to n+1 list hilbertFunction((i+1)*d - n,J)
+for i from 0 to n list hilbertFunction((i+1)*d - n,J)
 
 
 -- for i from 1 to n-1 do if i == k*(n-k)/2 then print concatenate("Warning: nontrivial cokernel contribution for i =",toString i) else continue
