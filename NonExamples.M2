@@ -183,6 +183,8 @@ testCases = {
     (3, 9, 1, "$d|n|3kd$"),
     -- d = 2
     (2, 4, 2, "$d|n|kd$"),
+
+    -- this is SLOW, consider commenting out
     (3, 6, 2, "$d|n|kd$"),
     (2, 7, 2, "$k=2,\\,2d|(n+1)$"),
 
