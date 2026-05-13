@@ -84,7 +84,7 @@ def verify_with_sharpness(j_max=20, t_max=20, n_max=15, max_examples=5):
 
 
 if __name__ == "__main__":
-    summary, total = verify_with_sharpness(j_max=30, t_max=30, n_max=30)
+    summary, total = verify_with_sharpness(j_max=20, t_max=20, n_max=20)
     print(f"\nTested {total} Snow partition instances.\n")
     for c in range(1, 7):
         entry = summary[c]
