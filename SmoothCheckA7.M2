@@ -1,3 +1,12 @@
+-- SmoothCheckA7.M2
+--
+-- Smoothness check for the A_7-symmetric linear section Z = V(f) of
+-- Gr(3, 10) used by GriffithsRingA7.M2. Builds the Jacobian ideal I via
+-- the E_{ij} action on f and confirms dim(I + (f) + pluckerIdeal) == 0,
+-- i.e. the singular locus on Z is empty.
+--
+-- Run with:  M2 SmoothCheckA7.M2
+
 needsPackage "Resultants";
 needsPackage "TensorComplexes"; -- for multiSubsets function
 needsPackage "Schubert2"; -- for Hodge number verification
@@ -33,16 +42,13 @@ numGens = #gensR;
 
 
 countInversions = (perm) -> (
-    lenPerm = #perm;
-    ans = 0;
-    for i from 0 to lenPerm-1 do (
-  for j from i+1 to lenPerm-1 do (
-if perm#j < perm#i then (
-    ans += 1;
-);
-  );
+    ans := 0;
+    for i from 0 to #perm-2 do (
+        for j from i+1 to #perm-1 do (
+            if perm#j < perm#i then ans = ans + 1;
+        );
     );
-    return ans;
+    ans
 );
 
 -- (1,2,3) -> false, (2,2,3) -> true
@@ -73,16 +79,6 @@ inversePerm = (perm) -> (
 		inv#(perm#i) = i;
 	);
 	toList inv
-);
-
-countInversions = (perm) -> (
-    ans := 0;
-    for i from 0 to #perm-2 do (
-        for j from i+1 to #perm-1 do (
-            if perm#j < perm#i then ans = ans + 1;
-        );
-    );
-    ans
 );
 
 -- Build lookup table once

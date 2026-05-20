@@ -1,3 +1,13 @@
+-- GriffithsRingQuadricGr26.m2
+--
+-- Specialization of the GriffithsRing.m2 pipeline to a quadric Z = V(f)
+-- in Gr(2, 6), with a fixed diagonal f = sum c_{ij} p_(i,j)^2. Computes
+-- primitive Hodge numbers via R / J_f.
+--
+-- Run with:  M2 GriffithsRingQuadricGr26.m2
+-- Companion smoothness check: SmoothCheckQuadricGr26.m2
+-- Thesis reference: Chapter 4, worked example for the quadric in Gr(2, 6).
+
 needsPackage "Resultants";
 needsPackage "TensorComplexes"; -- for multiSubsets function
 needsPackage "Schubert2"; -- for Hodge number verification
@@ -26,16 +36,13 @@ numGens = #gensR;
 
 
 countInversions = (perm) -> (
-    lenPerm = #perm;
-    ans = 0;
-    for i from 0 to lenPerm-1 do (
-  for j from i+1 to lenPerm-1 do (
-if perm#j < perm#i then (
-    ans += 1;
-);
-  );
+    ans := 0;
+    for i from 0 to #perm-2 do (
+        for j from i+1 to #perm-1 do (
+            if perm#j < perm#i then ans = ans + 1;
+        );
     );
-    return ans;
+    ans
 );
 
 -- (1,2,3) -> false, (2,2,3) -> true
@@ -66,16 +73,6 @@ inversePerm = (perm) -> (
 		inv#(perm#i) = i;
 	);
 	toList inv
-);
-
-countInversions = (perm) -> (
-    ans := 0;
-    for i from 0 to #perm-2 do (
-        for j from i+1 to #perm-1 do (
-            if perm#j < perm#i then ans = ans + 1;
-        );
-    );
-    ans
 );
 
 -- Build lookup table once

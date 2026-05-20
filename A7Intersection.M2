@@ -1,3 +1,16 @@
+-- A7Intersection.M2
+--
+-- Computes the A_7-invariant subspace of the 10-dimensional representation
+-- on Lambda^3(V) attached to the A_7-symmetric example in Gr(3, 10).
+-- The two generators r, s satisfy r^3 = s^5 = id (Atlas presentation),
+-- and the invariant subspace is the kernel of (Lambda^3 r - 1, Lambda^3 s - 1).
+-- The first column of Wgen gives the coefficient vector fCoeffs of the
+-- A_7-invariant linear form f (over QQ(b) with b^2 + b + 2 = 0).
+--
+-- Run with:  M2 A7Intersection.M2
+-- Companion: GriffithsRingA7.M2, A7IrrepDecomposition.M2
+-- Thesis reference: Chapter 5, A_7-symmetric example in Gr(3, 10).
+
 needsPackage "Cyclotomic";
 
 K = toField(QQ[t]/(t^2 + t + 2));

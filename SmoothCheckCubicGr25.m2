@@ -1,3 +1,11 @@
+-- SmoothCheckCubicGr25.m2
+--
+-- Confirms that the cubic Z = V(f) in Gr(2, 5) used by
+-- GriffithsRingCubicGr25.m2 is smooth, via isSmooth(I + (f)) on the
+-- Plucker ideal plus (f) with IsGraded=>true.
+--
+-- Run with:  M2 SmoothCheckCubicGr25.m2
+
 needsPackage "WeilDivisors";
 allowableThreads = 8;
 

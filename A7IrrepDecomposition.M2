@@ -1,3 +1,18 @@
+-- A7IrrepDecomposition.M2
+--
+-- Decomposes the 20-dimensional A_7 representation J_1 = (R / J_f)_1
+-- (where f is the A_7-symmetric linear form on Gr(3, 10) from
+-- GriffithsRingA7.M2) into A_7-irreducibles via character inner products.
+-- Builds the 20 x 20 representation matrix repMatrix(M) by projecting the
+-- Plücker-wedge action of M onto the fixed basis basisJ1R, then computes
+-- the character at nine class representatives and tests against the
+-- A_7 irreducible characters chi1, chiV6, chiV10, chiV10p, chiV14,
+-- chiV14p, chiV15, chiV21, chiV35.
+--
+-- Run with:  M2 A7IrrepDecomposition.M2
+-- Companion: A7Intersection.M2, GriffithsRingA7.M2
+-- Thesis reference: Chapter 5, A_7 character decomposition.
+
 needsPackage "TensorComplexes";
 needsPackage "Cyclotomic";
 

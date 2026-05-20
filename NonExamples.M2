@@ -130,7 +130,11 @@ verifyCase = (k, n, d, issue) -> (
         Iloc + ideal f
     );
 
-    -- Try up to MAX_ATTEMPTS times to get a smooth f
+    -- Single random draw. Smoothness is NOT verified here; if the printed
+    -- Griffiths-ring row disagrees with the primitive cohomology row for
+    -- this (k, n, d), re-run -- a singular f gives wrong Hodge numbers.
+    -- The Jacobian-generator-count check downstream catches some failures
+    -- but not all.
     local f; local I;
     f := randomIntPoly(d, R);
     I := buildJacobian f;
@@ -185,6 +189,7 @@ testCases = {
     (2, 4, 2, "$d|n|kd$"),
 
     -- this is SLOW, consider commenting out
+    -- or replacing f with a sparse polynomial
     (3, 6, 2, "$d|n|kd$"),
     (2, 7, 2, "$k=2,\\,2d|(n+1)$"),
 
@@ -192,6 +197,7 @@ testCases = {
     (3, 4, 3, "$k = n-1$"),
 
      -- these are SLOW, consider commenting out
+     -- or replacing f with a sparse polynomial
     (2, 5, 3, "$k=2,\\,2d|(n+1)$"),
     (2, 6, 3, "$d|n|kd$"),
     -- d >= 4

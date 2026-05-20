@@ -1,3 +1,18 @@
+-- PSL211IrrepDecomposition.M2
+--
+-- Decomposes the 20-dimensional PSL(2, 11) representation
+-- J_1 = (R / J_f)_1 (where f is the PSL(2, 11)-invariant linear form on
+-- Gr(3, 10) from GriffithsRingPSL211.M2) into PSL(2, 11)-irreducibles via
+-- character inner products on the eight conjugacy classes. Computes the
+-- 20 x 20 representation matrix repMatrix via Plucker-wedge action and
+-- compares the resulting character against chi1, chiV5sum, chiV10,
+-- chiV10p, chiV11, chiV12sum. Conjugate pairs (V_5, V_5*) and (V_12,
+-- V_12*) appear with equal multiplicities for any rational rep.
+--
+-- Run with:  M2 PSL211IrrepDecomposition.M2
+-- Companion: PSL211Intersection.M2, GriffithsRingPSL211.M2
+-- Thesis reference: Chapter 5, PSL(2, 11) character decomposition.
+
 needsPackage "Resultants";
 needsPackage "TensorComplexes"; -- for multiSubsets function
 needsPackage "WeilDivisors";
@@ -38,16 +53,13 @@ numGens = #gensR;
 
 
 countInversions = (perm) -> (
-    lenPerm = #perm;
-    ans = 0;
-    for i from 0 to lenPerm-1 do (
-  for j from i+1 to lenPerm-1 do (
-if perm#j < perm#i then (
-    ans += 1;
-);
-  );
+    ans := 0;
+    for i from 0 to #perm-2 do (
+        for j from i+1 to #perm-1 do (
+            if perm#j < perm#i then ans = ans + 1;
+        );
     );
-    return ans;
+    ans
 );
 
 -- (1,2,3) -> false, (2,2,3) -> true
@@ -90,16 +102,6 @@ inversePerm = (perm) -> (
 		inv#(perm#i) = i;
 	);
 	toList inv
-);
-
-countInversions = (perm) -> (
-    ans := 0;
-    for i from 0 to #perm-2 do (
-        for j from i+1 to #perm-1 do (
-            if perm#j < perm#i then ans = ans + 1;
-        );
-    );
-    ans
 );
 
 -- Build lookup table once

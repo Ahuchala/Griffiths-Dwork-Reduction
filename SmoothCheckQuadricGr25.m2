@@ -1,3 +1,11 @@
+-- SmoothCheckQuadricGr25.m2
+--
+-- Confirms that the quadric Z = V(f) in Gr(2, 5) used by
+-- GriffithsRingQuadricGr25.m2 is smooth, via isSmooth on the Plucker
+-- ideal plus (f) with IsGraded=>true.
+--
+-- Run with:  M2 SmoothCheckQuadricGr25.m2
+
 needsPackage "WeilDivisors";
 allowableThreads = 8;
 
