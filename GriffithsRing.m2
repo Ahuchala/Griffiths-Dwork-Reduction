@@ -25,11 +25,11 @@ needsPackage "WeilDivisors";
 needsPackage "Schubert2"; -- for Hodge number verification
 
 allowableThreads = 8;
-n = 8;
+n = 5;
 k = 2;
 
--- K = QQ;
-K = ZZ/11; -- finite field for speed; switch to QQ for exact arithmetic
+K = QQ;
+-- K = ZZ/97; -- finite field for speed; switch to QQ for exact arithmetic
 d = 2;
 
 
@@ -106,7 +106,17 @@ randomIntPoly = (d, R) ->
 	sum apply(monoms, m -> random(100) * m)
 );
 
-f = randomIntPoly(d, R);
+sparseRandomPoly = (d, R, nExtra) -> (
+    diag := sum apply(gens R, g -> random(1, 99) * g^d);
+    allMons := flatten entries basis(d, R);
+    extras := for i from 1 to nExtra list (
+        random(1, 99) * allMons#(random(#allMons))
+    );
+    diag + sum extras
+);
+
+-- f = randomIntPoly(d, R);
+f = sparseRandomPoly(2,R,3);
 
 inversePerm = (perm) -> (
 	n := #perm;
